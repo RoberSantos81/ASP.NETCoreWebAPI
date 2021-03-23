@@ -9,8 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MimicAPI.Repositories;
-using MimicAPI.Repositories.Contracts;
+using MimicAPI.V1.Repositories;
+using MimicAPI.V1.Repositories.Contracts;
 using AutoMapper;
 using MimicAPI.Helpers;
 
@@ -42,6 +42,22 @@ namespace MimicAPI
 
             //Adicionar o padrão Repository por injeção de dependência.
             services.AddScoped<IPalavraRepository, PalavraRepository>();
+            services.AddApiVersioning(cfg => {
+                cfg.ReportApiVersions = true;
+
+                cfg.AssumeDefaultVersionWhenUnspecified = true;
+                cfg.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+            });
+
+            services.AddSwaggerGen(cfg =>
+            {
+                cfg.ResolveConflictingActions(apiDescription => apiDescription.First());
+                cfg.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info()
+                {
+                    Title = "MimicAPI - V1",
+                    Version = "v1"
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -53,8 +69,15 @@ namespace MimicAPI
             }
 
             app.UseStatusCodePages();
-            app.UseMvc();            
+            
+            app.UseMvc();
 
+            app.UseSwagger(); // /swagger/v1/swagger.json
+            app.UseSwaggerUI(cfg =>
+            {
+                cfg.SwaggerEndpoint("/swagger/v1/swagger.json", "MimicAPI");
+                cfg.RoutePrefix = String.Empty;
+            });
         }
     }
 }
